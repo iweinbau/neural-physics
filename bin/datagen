@@ -47,11 +47,11 @@ def main():
     # Generate data
     data = pd.DataFrame(
         {
-            "step": np.arange(0, args.number),
+            "step_num": np.arange(0, args.number),
         }
     )
 
-    data["time_s"] = data["step"].apply(lambda x: time(x, args.fps))
+    data["time_s"] = data["step_num"].apply(lambda x: time(x, args.fps))
 
     data["y"] = args.y_init - GRAVITY * data["time_s"] ** 2 * 0.5
     data["y"] = data["y"].clip(lower=0)  # stop at sea level
