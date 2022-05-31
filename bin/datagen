@@ -58,7 +58,7 @@ def main():
     data["y"] = data["y"].round(5)
 
     # add y deltas
-    data["y_delta"] = data["y"].diff()
+    data["y_delta"] = -data["y"].diff(periods=-1)
     data["y_delta"] = data["y_delta"].round(5)
 
     # add previous y value
