@@ -61,6 +61,9 @@ def main():
     data["y_delta"] = data["y"].diff()
     data["y_delta"] = data["y_delta"].round(5)
 
+    # add previous y value
+    data["y_prev"] = data["y"].shift(1)
+
     # Save the data
     data.to_csv(args.output, index=False)
 
