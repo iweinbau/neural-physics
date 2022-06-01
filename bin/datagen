@@ -40,6 +40,13 @@ def main():
         help="Initial height of the mass.",
     )
     parser.add_argument(
+        "-sl",
+        "--sea-level",
+        type=float,
+        default=0,
+        help="Sea level height"
+    )
+    parser.add_argument(
         "-o", "--output", type=str, default="data.csv", help="Output file name."
     )
     args = parser.parse_args()
@@ -54,7 +61,7 @@ def main():
     data["time_s"] = data["step_num"].apply(lambda x: time(x, args.fps))
 
     data["y"] = args.y_init - GRAVITY * data["time_s"] ** 2 * 0.5
-    data["y"] = data["y"].clip(lower=0)  # stop at sea level
+    data["y"] = data["y"].clip(lower=args.sea_level)  # stop at sea level
     data["y"] = data["y"].round(5)
 
     # add y deltas
