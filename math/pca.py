@@ -9,7 +9,7 @@ class PCA:
         @param n: number of components
         """
         self.n_components = n
-        self.T = np.array([])
+        self.U = np.array([])
         self.mean = np.array([])
 
     def fit(self, x, mean_zero=True):
@@ -26,12 +26,12 @@ class PCA:
 
         # calculate eigen values and vectors of the covariance matrix
         cov = np.cov(data, rowvar=True)
-        eigen_val, eigen_vec = np.linalg.eig(cov)
+        eigen_val, eigen_vec = np.linalg.eigh(cov)
 
         # sort descending
-        sorted_index = np.argsort(eigen_val)[::-1]
+        sorted_index = np.argsort(eigen_val)[:-self.n_components-1:-1]
         sorted_eigen_vec = eigen_vec[:, sorted_index]
-        self.T = sorted_eigen_vec[:, 0:self.n_components]
+        self.U = sorted_eigen_vec.T
 
     def encode(self, x, mean_zero=True):
         """
@@ -41,9 +41,9 @@ class PCA:
         @return: return an n_components x n data vector
         """
         if mean_zero:
-            return np.matmul((x - self.mean).T, self.T)
+            return np.matmul(self.U, (x - self.mean))
         else:
-            return np.matmul(x.T, self.T)
+            return np.matmul(self.U, x)
 
     def decode(self, x):
         """
@@ -51,5 +51,4 @@ class PCA:
         @param x: n_components x n array
         @return: m x n array with n the number of data points and m the number of features
         """
-        return np.dot(x, self.T.T).T
-
+        return np.matmul(self.U.T, x)
