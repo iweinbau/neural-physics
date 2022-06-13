@@ -72,8 +72,7 @@ def test_train(dummy_data):
 
             z_bar = init_model_for_frame(alphas, betas, z_star_prev, z_star_prev_prev)
 
-            model_inputs = torch.cat((z_bar, z_star_prev)).T
-            model_inputs = model_inputs.unsqueeze(0)
+            model_inputs = torch.cat((z_bar, z_star_prev)).view(1, -1)
             model_inputs = model_inputs.to(device)
             residual_effects = network_correction(model_inputs)
 
