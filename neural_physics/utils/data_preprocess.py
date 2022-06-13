@@ -4,6 +4,31 @@ import numpy as np
 from neural_physics.core_math.alg import least_squares
 
 
+def get_windows(subspace_z: np.ndarray, window_size: int = 32) -> np.ndarray:
+    """
+    Split the subspace_z into windows of size window_size
+    @param subspace_z: (n_components x num_frames) matrix with the subspace_z
+    @param window_size: size of the window
+    @return iterator yielding windows of shape (n_components x window_size)
+    """
+    num_components, num_frames = subspace_z.shape
+
+    if num_frames < window_size:
+        yield subspace_z
+
+    # Window size must be a divisor of the number of frames.
+    if num_frames % window_size != 0:
+        # drop remainder of frames
+        remainder = num_frames % window_size
+        subspace_z = subspace_z[:, :-remainder]
+
+    for subspace_z_window in np.array_split(
+        subspace_z, num_frames // window_size, axis=1
+    ):
+        assert subspace_z_window.shape == (num_components, window_size)
+        yield subspace_z_window
+
+
 def initial_model_params(subspace_z: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate Alpha and Beta for the initial model by solving a least square problem for each component

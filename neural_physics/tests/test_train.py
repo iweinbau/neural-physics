@@ -3,6 +3,7 @@ import torch
 from neural_physics.core_math.pca import PCA
 from neural_physics.train.subspace_neural_physics import SubSpaceNeuralNetwork
 from neural_physics.utils.data_preprocess import (
+    get_windows,
     init_model_for_frame,
     initial_model_params,
 )
@@ -52,17 +53,8 @@ def test_train(dummy_data):
     )
     network_correction = network_correction.to(device)
 
-    window_size = 10
-
-    # Window size must be a divisor of the number of frames.
-    if subspace_z.shape[1] % window_size != 0:
-        # drop remainder of frames
-        subspace_z = subspace_z[:, : -subspace_z.shape[1] % window_size]
-
-    for subspace_z_window in np.array_split(
-        subspace_z, subspace_z.shape[1] // window_size, axis=1
-    ):
-        assert subspace_z_window.shape == (num_components, window_size)
+    for subspace_z_window in get_windows(subspace_z, window_size=32):
+        num_components, window_size = subspace_z_window.shape
 
         z_star = np.zeros((num_components, window_size))
         z_star[:, 0] = subspace_z_window[:, 0]
@@ -84,4 +76,4 @@ def test_train(dummy_data):
         # z_star all non-zero
         assert np.all(z_star)
 
-    # TODO: compute loss
+        # TODO: compute loss
