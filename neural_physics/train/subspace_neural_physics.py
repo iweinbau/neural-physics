@@ -10,21 +10,23 @@ print(f"Using {device} device")
 
 
 class SubSpaceNeuralNetwork(nn.Module):
-    def __init__(self, n_hidden_layers: int, n_components: int):
+    def __init__(self, n_hidden_layers: int = 10, num_components: int = 256):
         super().__init__()
 
-        hidden_units = round(1.5 * n_components)
+        self.num_components = num_components
 
-        self.encode = nn.Linear(n_components, hidden_units)
+        hidden_size = round(1.5 * self.num_components)
+
+        self.encode = nn.Linear(self.num_components, hidden_size)
 
         self.feed_forward = nn.Sequential(
             *[
-                nn.Sequential(nn.Linear(hidden_units, hidden_units), nn.ReLU())
+                nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU())
                 for _ in range(n_hidden_layers)
             ],
         )
 
-        self.decode = nn.Linear(hidden_units, n_components)
+        self.decode = nn.Linear(hidden_size, self.num_components)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -33,6 +35,10 @@ class SubSpaceNeuralNetwork(nn.Module):
         @param inputs: The input to the network. Shape: (batch_size, n_components)
         @return: The output of the network. Shape: (batch_size, n_components)
         """
+        assert (
+            inputs.shape[1] == self.num_components
+        ), f"num_components in input: {inputs.shape[1]} does not match expected num_components: {self.num_components}"
+
         hidden = self.encode(inputs)  # (batch_size, hidden_units)
         hidden = self.feed_forward(hidden)  # (batch_size, hidden_units)
         logits = self.decode(hidden)  # (batch_size, n_components)
