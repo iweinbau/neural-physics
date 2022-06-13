@@ -2,7 +2,6 @@ import numpy as np
 
 
 class PCA:
-
     def __init__(self, n):
         """
         Create new PCA object
@@ -29,7 +28,7 @@ class PCA:
         eigen_val, eigen_vec = np.linalg.eigh(cov)
 
         # sort descending
-        sorted_index = np.argsort(eigen_val)[:-self.n_components-1:-1]
+        sorted_index = np.argsort(eigen_val)[: -self.n_components - 1 : -1]
         sorted_eigen_vec = eigen_vec[:, sorted_index]
         self.U = sorted_eigen_vec.T
 
@@ -45,10 +44,13 @@ class PCA:
         else:
             return np.matmul(self.U, x)
 
-    def decode(self, x):
+    def decode(self, x, mean_zero=True):
         """
         Decompose a PCA feature vector in to its full feature vector
         @param x: n_components x n array
         @return: m x n array with n the number of data points and m the number of features
         """
-        return np.matmul(self.U.T, x)
+        if mean_zero:
+            return np.matmul(self.U.T, x) + self.mean
+        else:
+            return np.matmul(self.U.T, x)
