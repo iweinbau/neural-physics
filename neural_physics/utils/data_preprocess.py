@@ -1,10 +1,11 @@
 from typing import Tuple
 
 import numpy as np
+import torch
 from neural_physics.core_math.alg import least_squares
 
 
-def get_windows(subspace_z: np.ndarray, window_size: int = 32) -> np.ndarray:
+def get_windows(subspace_z: torch.Tensor, window_size: int = 32) -> torch.Tensor:
     """
     Split the subspace_z into windows of size window_size
     @param subspace_z: (n_components x num_frames) matrix with the subspace_z
@@ -29,7 +30,7 @@ def get_windows(subspace_z: np.ndarray, window_size: int = 32) -> np.ndarray:
         yield subspace_z_window
 
 
-def initial_model_params(subspace_z: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def initial_model_params(subspace_z: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor]:
     """
     Calculate Alpha and Beta for the initial model by solving a least square problem for each component
     @param z: encode data vector (n_components x n)
@@ -52,15 +53,15 @@ def initial_model_params(subspace_z: np.ndarray) -> Tuple[np.ndarray, np.ndarray
     alphas = X[:, 0]
     betas = X[:, 1]
 
-    return alphas, betas
+    return torch.from_numpy(alphas).float(), torch.from_numpy(betas).float()
 
 
 def init_model_for_frame(
-    alphas: np.ndarray,
-    betas: np.ndarray,
-    z_star_prev: np.ndarray,
-    z_star_prev_prev: np.ndarray,
-) -> np.ndarray:
+    alphas: torch.Tensor,
+    betas: torch.Tensor,
+    z_star_prev: torch.Tensor,
+    z_star_prev_prev: torch.Tensor,
+) -> torch.Tensor:
     """
     Calculate initial model z_bar = alpha ⊙ z_t−1 + beta ⊙ (zt−1 − zt−2)
     @param alpha: (n_components x 1) vector with the alpha factors

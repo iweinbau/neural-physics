@@ -1,7 +1,6 @@
-import numpy as np
 import torch
 from neural_physics.core_math.pca import PCA
-from neural_physics.train.subspace_neural_physics import SubSpaceNeuralNetwork
+from neural_physics.train.subspace_neural_physics import SubSpaceNeuralNetwork, loss_fn
 from neural_physics.utils.data_preprocess import (
     get_windows,
     init_model_for_frame,
@@ -36,6 +35,11 @@ def test_train(dummy_data):
     pca.fit(X)
     subspace_z = pca.encode(X)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Using {device} device")
+
+    subspace_z = torch.from_numpy(subspace_z).float().to(device)
+
     assert subspace_z.shape == (num_components, X.shape[1])
 
     # TODO: add external object
@@ -45,18 +49,20 @@ def test_train(dummy_data):
 
     alphas, betas = initial_model_params(subspace_z)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"Using {device} device")
-
     network_correction = SubSpaceNeuralNetwork(
         n_hidden_layers=2, num_components=num_components
     )
     network_correction = network_correction.to(device)
 
+    optimizer = torch.optim.Adam(network_correction.parameters(), lr=0.01, amsgrad=True)
+
     for subspace_z_window in get_windows(subspace_z, window_size=32):
         num_components, window_size = subspace_z_window.shape
 
-        z_star = np.zeros((num_components, window_size))
+        z_star = torch.zeros(
+            (num_components, window_size), dtype=torch.float32, device=device
+        )
+        # TODO: add noise
         z_star[:, 0] = subspace_z_window[:, 0]
         z_star[:, 1] = subspace_z_window[:, 1]
 
@@ -66,14 +72,24 @@ def test_train(dummy_data):
 
             z_bar = init_model_for_frame(alphas, betas, z_star_prev, z_star_prev_prev)
 
-            model_inputs = np.concatenate((z_bar, z_star_prev)).T
-            model_inputs = torch.from_numpy(model_inputs).float().unsqueeze(0)
+            model_inputs = torch.cat((z_bar, z_star_prev)).T
+            model_inputs = model_inputs.unsqueeze(0)
             model_inputs = model_inputs.to(device)
-            residual_effects = network_correction(model_inputs).detach().numpy()
+            residual_effects = network_correction(model_inputs)
 
             z_star[:, frame] = z_bar + residual_effects
 
         # z_star all non-zero
-        assert np.all(z_star)
+        assert torch.all(z_star)
 
-        # TODO: compute loss
+        loss = loss_fn(
+            z_star=z_star[:, 2:],
+            z=subspace_z_window[:, 2:],
+            z_star_prev=z_star[:, 1:-1],
+            z_prev=subspace_z_window[:, 1:-1],
+        )
+        assert loss.shape == torch.Size([])
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()

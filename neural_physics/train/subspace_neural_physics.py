@@ -49,7 +49,7 @@ def loss_position(z_star, z):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return np.mean(np.abs(z_star - z), axis=0)
+    return torch.mean(torch.abs(z_star - z), dim=0)
 
 
 def loss_velocity(z_star, z_star_prev, z, z_prev):
@@ -61,7 +61,7 @@ def loss_velocity(z_star, z_star_prev, z, z_prev):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return np.mean(np.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), axis=0)
+    return torch.mean(torch.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), dim=0)
 
 
 def loss_fn(z_star, z_star_prev, z, z_prev):
@@ -73,4 +73,5 @@ def loss_fn(z_star, z_star_prev, z, z_prev):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return loss_position(z_star, z) + loss_velocity(z_star, z_star_prev, z, z_prev)
+    loss = loss_position(z_star, z) + loss_velocity(z_star, z_star_prev, z, z_prev)
+    return loss.mean()
