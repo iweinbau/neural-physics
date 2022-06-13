@@ -5,19 +5,16 @@ from torch import nn
 # 60 fps
 dt = 1 / 60
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using {device} device")
-
 
 class SubSpaceNeuralNetwork(nn.Module):
-    def __init__(self, n_hidden_layers: int = 10, num_components: int = 256):
+    def __init__(self, num_components: int = 256, n_hidden_layers: int = 10):
         super().__init__()
 
-        self.num_components = num_components
+        self.input_size = num_components * 2  # (z_bar, z_star_prev) concatenated
 
-        hidden_size = round(1.5 * self.num_components)
+        hidden_size = round(1.5 * num_components)
 
-        self.encode = nn.Linear(self.num_components, hidden_size)
+        self.encode = nn.Linear(self.input_size, hidden_size)
 
         self.feed_forward = nn.Sequential(
             *[
@@ -26,7 +23,7 @@ class SubSpaceNeuralNetwork(nn.Module):
             ],
         )
 
-        self.decode = nn.Linear(hidden_size, self.num_components)
+        self.decode = nn.Linear(hidden_size, num_components)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -36,8 +33,8 @@ class SubSpaceNeuralNetwork(nn.Module):
         @return: The output of the network. Shape: (batch_size, n_components)
         """
         assert (
-            inputs.shape[1] == self.num_components
-        ), f"num_components in input: {inputs.shape[1]} does not match expected num_components: {self.num_components}"
+            inputs.shape[1] == self.input_size
+        ), f"input_size: {inputs.shape[1]} does not match expected input_size: {self.input_size}"
 
         hidden = self.encode(inputs)  # (batch_size, hidden_units)
         hidden = self.feed_forward(hidden)  # (batch_size, hidden_units)
