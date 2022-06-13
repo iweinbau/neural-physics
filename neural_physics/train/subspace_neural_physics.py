@@ -5,26 +5,25 @@ from torch import nn
 # 60 fps
 dt = 1 / 60
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Using {device} device")
-
 
 class SubSpaceNeuralNetwork(nn.Module):
-    def __init__(self, n_hidden_layers: int, n_components: int):
+    def __init__(self, num_components: int = 256, n_hidden_layers: int = 10):
         super().__init__()
 
-        hidden_units = round(1.5 * n_components)
+        self.input_size = num_components * 2  # (z_bar, z_star_prev) concatenated
 
-        self.encode = nn.Linear(n_components, hidden_units)
+        hidden_size = round(1.5 * num_components)
+
+        self.encode = nn.Linear(self.input_size, hidden_size)
 
         self.feed_forward = nn.Sequential(
             *[
-                nn.Sequential(nn.Linear(hidden_units, hidden_units), nn.ReLU())
+                nn.Sequential(nn.Linear(hidden_size, hidden_size), nn.ReLU())
                 for _ in range(n_hidden_layers)
             ],
         )
 
-        self.decode = nn.Linear(hidden_units, n_components)
+        self.decode = nn.Linear(hidden_size, num_components)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -33,6 +32,10 @@ class SubSpaceNeuralNetwork(nn.Module):
         @param inputs: The input to the network. Shape: (batch_size, n_components)
         @return: The output of the network. Shape: (batch_size, n_components)
         """
+        assert (
+            inputs.shape[1] == self.input_size
+        ), f"input_size: {inputs.shape[1]} does not match expected input_size: {self.input_size}"
+
         hidden = self.encode(inputs)  # (batch_size, hidden_units)
         hidden = self.feed_forward(hidden)  # (batch_size, hidden_units)
         logits = self.decode(hidden)  # (batch_size, n_components)
@@ -46,7 +49,7 @@ def loss_position(z_star, z):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return np.mean(np.abs(z_star - z), axis=0)
+    return torch.mean(torch.abs(z_star - z), dim=0)
 
 
 def loss_velocity(z_star, z_star_prev, z, z_prev):
@@ -58,7 +61,7 @@ def loss_velocity(z_star, z_star_prev, z, z_prev):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return np.mean(np.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), axis=0)
+    return torch.mean(torch.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), dim=0)
 
 
 def loss_fn(z_star, z_star_prev, z, z_prev):
@@ -70,4 +73,5 @@ def loss_fn(z_star, z_star_prev, z, z_prev):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return loss_position(z_star, z) + loss_velocity(z_star, z_star_prev, z, z_prev)
+    loss = loss_position(z_star, z) + loss_velocity(z_star, z_star_prev, z, z_prev)
+    return loss.mean()
