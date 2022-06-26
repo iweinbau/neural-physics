@@ -83,7 +83,8 @@ def main():
     simulation_config = {
         'gravity': GRAVITY,
         'gravity_direction': GRAVITY_DIRECTION.tolist(),
-        'sea_level': args.sea_level
+        'sea_level': args.sea_level,
+        'data_file': args.output
     }
 
     data["time_s"] = data["step_num"].apply(lambda x: time(x, args.fps))
