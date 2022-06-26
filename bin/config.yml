@@ -1,0 +1,6 @@
+gravity: 10.0
+gravity_direction:
+- 0.0
+- 0.0
+- -1.0
+sea_level: 7.0

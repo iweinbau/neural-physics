@@ -4,8 +4,11 @@ import argparse
 
 import numpy as np
 import pandas as pd
+import yaml
+import io
 
 GRAVITY = 9.81  # m/s^2
+GRAVITY_DIRECTION = np.array([0, -1, 0])
 
 
 def time(step: int, fps: int):
@@ -40,6 +43,22 @@ def main():
         help="Initial height of the mass.",
     )
     parser.add_argument(
+        "-g",
+        "--gravity",
+        type=float,
+        default=9.81,
+        help="Gravitational acceleration"
+    )
+    parser.add_argument(
+        "-gd",
+        "--gravity-dir",
+        nargs='+',
+        default=np.array([0, -1, 0]),
+        type=float,
+        help="Gravity direction"
+    )
+
+    parser.add_argument(
         "-sl",
         "--sea-level",
         type=float,
@@ -51,12 +70,21 @@ def main():
     )
     args = parser.parse_args()
 
+    GRAVITY = args.gravity
+    GRAVITY_DIRECTION = np.array(args.gravity_dir)
+
     # Generate data
     data = pd.DataFrame(
         {
             "step_num": np.arange(0, args.number),
         }
     )
+
+    simulation_config = {
+        'gravity': GRAVITY,
+        'gravity_direction': GRAVITY_DIRECTION.tolist(),
+        'sea_level': args.sea_level
+    }
 
     data["time_s"] = data["step_num"].apply(lambda x: time(x, args.fps))
 
@@ -73,6 +101,9 @@ def main():
 
     # Save the data
     data.to_csv(args.output, index=False)
+
+    with io.open('config.yml', 'w', encoding='utf8') as outfile:
+        yaml.dump(simulation_config, outfile)
 
 
 if __name__ == "__main__":
