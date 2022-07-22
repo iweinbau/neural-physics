@@ -378,3 +378,7 @@ $RECYCLE.BIN/
 
 .idea/*
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,python,pycharm,visualstudiocode
+
+*.csv
+*.yml
+

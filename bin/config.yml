@@ -1,0 +1,7 @@
+data_file: data.csv
+gravity: 9.81
+gravity_direction:
+- 0
+- -1
+- 0
+sea_level: 0
