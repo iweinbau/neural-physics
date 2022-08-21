@@ -44,7 +44,7 @@ def main():
     )
     parser.add_argument(
         "-g",
-        "--gravity",
+        "--gravity_acc",
         type=float,
         default=9.81,
         help="Gravitational acceleration"
@@ -70,7 +70,7 @@ def main():
     )
     args = parser.parse_args()
 
-    GRAVITY = args.gravity
+    GRAVITY_ACC = args.gravity_acc
     GRAVITY_DIRECTION = np.array(args.gravity_dir)
 
     # Generate data
@@ -81,15 +81,15 @@ def main():
     )
 
     simulation_config = {
-        'gravity': GRAVITY,
-        'gravity_direction': GRAVITY_DIRECTION.tolist(),
+        'gravity': GRAVITY_ACC,
+        'gravity_direction': "{0}, {1}, {2}".format(GRAVITY_DIRECTION[0], GRAVITY_DIRECTION[1], GRAVITY_DIRECTION[2]),
         'sea_level': args.sea_level,
         'data_file': args.output
     }
 
     data["time_s"] = data["step_num"].apply(lambda x: time(x, args.fps))
 
-    data["y"] = args.y_init - GRAVITY * data["time_s"] ** 2 * 0.5
+    data["y"] = args.y_init - GRAVITY_ACC * data["time_s"] ** 2 * 0.5
     data["y"] = data["y"].clip(lower=args.sea_level)  # stop at sea level
     data["y"] = data["y"].round(5)
 
