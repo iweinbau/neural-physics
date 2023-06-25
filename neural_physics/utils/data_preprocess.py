@@ -1,3 +1,4 @@
+import random
 from typing import Tuple
 
 import numpy as np
@@ -23,8 +24,7 @@ def get_windows(subspace_z: torch.Tensor, subspace_w: torch.Tensor, window_size:
     # ):
     #     assert subspace_z_window.shape == (num_components, window_size)
     #     yield subspace_z_window
-
-    for i in range(num_frames- window_size + 1):
+    for i in random.sample(range(num_frames- window_size + 1), num_frames- window_size + 1):
         subspace_z_window = subspace_z[:, i:i+window_size]
         subspace_w_window = subspace_w[:, i:i+window_size]
         assert subspace_z_window.shape == (num_components_x, window_size)

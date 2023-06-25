@@ -39,7 +39,7 @@ def main():
         "-y",
         "--y-init",
         type=float,
-        default=1000,
+        default=1500,
         help="Initial height of the mass.",
     )
     parser.add_argument(

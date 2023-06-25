@@ -383,3 +383,4 @@ $RECYCLE.BIN/
 *.csv
 *.yml
 
+runs/*
