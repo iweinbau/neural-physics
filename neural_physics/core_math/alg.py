@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def least_squares(A, b):
     """
     Calculate the solution of the least squares problem min (||b-Ax||)

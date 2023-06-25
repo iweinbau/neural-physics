@@ -2,32 +2,34 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from neural_physics.core_math.alg import least_squares
+from core_math.alg import least_squares
 
-
-def get_windows(subspace_z: torch.Tensor, window_size: int = 32) -> torch.Tensor:
+def get_windows(subspace_z: torch.Tensor, subspace_w: torch.Tensor, window_size: int = 32) -> torch.Tensor:
     """
-    Split the subspace_z into windows of size window_size
+    Split the subspace_z into windows of size window_size and stide 1
     @param subspace_z: (n_components x num_frames) matrix with the subspace_z
     @param window_size: size of the window
     @return iterator yielding windows of shape (n_components x window_size)
     """
-    num_components, num_frames = subspace_z.shape
+    num_components_x, num_frames = subspace_z.shape
+    num_components_y, num_frames = subspace_w.shape
+    assert num_frames == subspace_w.shape[1]
 
     if num_frames < window_size:
-        yield subspace_z
+        yield subspace_z, subspace_w
 
-    # Window size must be a divisor of the number of frames.
-    if num_frames % window_size != 0:
-        # drop remainder of frames
-        remainder = num_frames % window_size
-        subspace_z = subspace_z[:, :-remainder]
+    # for subspace_z_window in np.array_split(
+    #     subspace_z, num_frames // window_size, axis=1
+    # ):
+    #     assert subspace_z_window.shape == (num_components, window_size)
+    #     yield subspace_z_window
 
-    for subspace_z_window in np.array_split(
-        subspace_z, num_frames // window_size, axis=1
-    ):
-        assert subspace_z_window.shape == (num_components, window_size)
-        yield subspace_z_window
+    for i in range(num_frames- window_size + 1):
+        subspace_z_window = subspace_z[:, i:i+window_size]
+        subspace_w_window = subspace_w[:, i:i+window_size]
+        assert subspace_z_window.shape == (num_components_x, window_size)
+        assert subspace_w_window.shape == (num_components_y, window_size)
+        yield subspace_z_window, subspace_w_window
 
 
 def initial_model_params(subspace_z: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -70,3 +72,4 @@ def init_model_for_frame(
     """
     z_bar = alphas * z_star_prev + betas * (z_star_prev - z_star_prev_prev)
     return z_bar
+

@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class PCA:
     def __init__(self, n):
         """
@@ -16,7 +15,7 @@ class PCA:
         Calculate PCA from data x
         @param mean_zero: true if you want to do pca with a zero mean.
         @param x: m x n data array, where n is the number of data points and m DOF
-        """
+        """      
         self.mean = np.mean(x, axis=1, keepdims=True)
         if mean_zero:
             data = x - self.mean

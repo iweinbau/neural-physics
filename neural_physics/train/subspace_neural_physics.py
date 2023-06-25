@@ -5,14 +5,13 @@ from torch import nn
 # 60 fps
 dt = 1 / 60
 
-
 class SubSpaceNeuralNetwork(nn.Module):
-    def __init__(self, num_components: int = 256, n_hidden_layers: int = 10):
+    def __init__(self, num_components_X: int = 256, num_components_Y: int=4, n_hidden_layers: int = 10):
         super().__init__()
 
-        self.input_size = num_components * 2  # (z_bar, z_star_prev) concatenated
+        self.input_size = num_components_X * 2 + num_components_Y  # (z_bar, z_star_prev) concatenated
 
-        hidden_size = round(1.5 * num_components)
+        hidden_size = round(1.5 * num_components_X)
 
         self.encode = nn.Linear(self.input_size, hidden_size)
 
@@ -23,7 +22,7 @@ class SubSpaceNeuralNetwork(nn.Module):
             ],
         )
 
-        self.decode = nn.Linear(hidden_size, num_components)
+        self.decode = nn.Linear(hidden_size, num_components_X)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """
@@ -40,7 +39,6 @@ class SubSpaceNeuralNetwork(nn.Module):
         hidden = self.feed_forward(hidden)  # (batch_size, hidden_units)
         logits = self.decode(hidden)  # (batch_size, n_components)
         return logits
-
 
 def loss_position(z_star, z):
     """
