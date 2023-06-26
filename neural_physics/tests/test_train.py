@@ -2,7 +2,7 @@ import torch
 from neural_physics.core_math.pca import PCA
 from neural_physics.train.subspace_neural_physics import SubSpaceNeuralNetwork, loss_fn
 from neural_physics.utils.data_preprocess import (
-    get_windows,
+    get_windows_,
     init_model_for_frame,
     initial_model_params,
 )
@@ -19,7 +19,7 @@ def test_model():
     dummy_z_star_prev = torch.rand([batch_size, n_components], device=device)
     inputs = torch.cat((dummy_z_bar, dummy_z_star_prev), dim=1)
 
-    model = SubSpaceNeuralNetwork(num_components=n_components, n_hidden_layers=2)
+    model = SubSpaceNeuralNetwork(num_components_X=n_components, n_hidden_layers=2)
     model = model.to(device)
 
     outputs = model(inputs)
@@ -50,13 +50,13 @@ def test_train(dummy_data):
     alphas, betas = initial_model_params(subspace_z)
 
     network_correction = SubSpaceNeuralNetwork(
-        n_hidden_layers=2, num_components=num_components
+        n_hidden_layers=2, num_components_X=num_components
     )
     network_correction = network_correction.to(device)
 
     optimizer = torch.optim.Adam(network_correction.parameters(), lr=0.01, amsgrad=True)
 
-    for subspace_z_window in get_windows(subspace_z, window_size=32):
+    for subspace_z_window in get_windows_(subspace_z, window_size=32):
         num_components, window_size = subspace_z_window.shape
 
         z_star = torch.zeros(

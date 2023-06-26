@@ -6,7 +6,7 @@ from torch import nn
 dt = 1 / 60
 
 class SubSpaceNeuralNetwork(nn.Module):
-    def __init__(self, num_components_X: int = 256, num_components_Y: int=4, n_hidden_layers: int = 10):
+    def __init__(self, num_components_X: int = 256, num_components_Y: int=0, n_hidden_layers: int = 10):
         super().__init__()
 
         self.input_size = num_components_X * 2 + num_components_Y  # (z_bar, z_star_prev) concatenated

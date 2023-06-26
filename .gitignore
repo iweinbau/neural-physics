@@ -384,3 +384,5 @@ $RECYCLE.BIN/
 *.yml
 
 runs/*
+.vscode/*
+models/*
