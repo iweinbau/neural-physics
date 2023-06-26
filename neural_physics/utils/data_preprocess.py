@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from core_math.alg import least_squares
+from neural_physics.core_math.alg import least_squares
 
 def get_windows(subspace_z: torch.Tensor, subspace_w: torch.Tensor, window_size: int = 32) -> torch.Tensor:
     """

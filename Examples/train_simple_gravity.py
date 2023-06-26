@@ -8,8 +8,8 @@ import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from train.subspace_neural_physics import *
-from utils.data_preprocess import *
+from neural_physics.train.subspace_neural_physics import *
+from neural_physics.utils.data_preprocess import *
 
 config_file_dir = "bin"
 config_file_name = "config.yml"
