@@ -386,3 +386,12 @@ $RECYCLE.BIN/
 runs/*
 .vscode/*
 models/*
+bin/data.npy
+bin/wind_simulation.npy
+bin/wind_external.npy
+
+
+/bin/flag_simulation.npy
+/bin/flag_wind.npy
+/bin/data.npy
+/bin/external.npy

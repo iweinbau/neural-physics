@@ -7,26 +7,27 @@ import os
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from neural_physics.core_math.pca import PCA
 
 from neural_physics.train.subspace_neural_physics import *
 from neural_physics.utils.data_preprocess import *
 
 config_file_dir = "bin"
-config_file_name = "config.yml"
+config_file_name = "config_gravity.yml"
 
 learing_rate = 0.0001
 num_epochs = 100
 batch_size = 16
 window_size = 32
 
-with open(os.path.join(config_file_dir,config_file_name), 'r') as stream:
+with open(os.path.join(config_file_dir, config_file_name), 'r') as stream:
     try:
         config = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
 
 data_file_name = config['data_file']
-external_file_name = config['external_force']
+external_file_name = config['external']
 
 # read data file
 data = np.load(os.path.join(config_file_dir, data_file_name))
@@ -36,19 +37,20 @@ external = np.load(os.path.join(config_file_dir, external_file_name))
 # get time step
 dt = config['dt']
 
+X = data.T  # 2nd column is the position data and data should be in format (dim x samples)
+X = X.reshape(X.shape[0] * X.shape[1], X.shape[2])
+Y = external.T  # 2nd column is the position data and data should be in format (dim x samples)
 
-X = data.T # 2nd column is the position data and data should be in format (dim x samples)
-Y = external.T # 2nd column is the position data and data should be in format (dim x samples)
-
-num_components_X = X.shape[0]
+num_components_X = 64
 num_components_Y = Y.shape[0]
 
-subspace_z = X # no PCA needed for 1D data
-subspace_w = Y # no PCA needed for external effects
+pca_x = PCA(num_components_X)
+pca_x.fit(X)
+subspace_z = pca_x.encode(X)
 
-# pca = PCA(num_components)
-# pca.fit(X)
-# subspace_z = pca.encode(X)
+pca_w = PCA(num_components_Y)
+pca_w.fit(Y)
+subspace_w = pca_w.encode(Y)
 
 # setup pytorch
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -69,14 +71,26 @@ alphas, betas = initial_model_params(subspace_z)
 # num_components_X + num_components_Y input neurons
 
 network_correction = SubSpaceNeuralNetwork(
-        n_hidden_layers=2, 
-        num_components_X=num_components_X, 
-        num_components_Y=num_components_Y
-    )
+    n_hidden_layers=10,
+    num_components_X=num_components_X,
+    num_components_Y=num_components_Y
+)
+
+checkpoint = None
+try:
+    checkpoint = torch.load(f"models/model{0}.pt")
+except:
+    print("No Checkpoint saved")
+
+if checkpoint:
+    print("loading from checkpoint")
+    network_correction.load_state_dict(checkpoint.state_dict())
+    network_correction.train()
+
 network_correction = network_correction.to(device)
 optimizer = torch.optim.Adam(network_correction.parameters(), lr=learing_rate, amsgrad=True)
 
-writer = SummaryWriter('runs/experiment_1')
+writer = SummaryWriter('runs/experiment_2')
 
 iter = 0
 # train model
@@ -91,15 +105,12 @@ for epoch in range(num_epochs):
             (num_components_X, window_size), dtype=torch.float32, device=device
         )
 
-        # create gaussian noise with std = 0.01 and size of z_star
+        # create gaussian noise with std = 0.1 and size of z_star
         r0 = torch.randn(z_star.shape[0]) * 0.01
         r1 = torch.randn(z_star.shape[0]) * 0.01
 
-        z_star[:, 0] = subspace_z_window[:, 0]
-        z_star[:, 1] = subspace_z_window[:, 1]
-
-        z_star[:, 0] += r0
-        z_star[:, 1] += r1
+        z_star[:, 0] = subspace_z_window[:, 0] + r0
+        z_star[:, 1] = subspace_z_window[:, 1] + r1
 
         for frame in range(2, window_size):
             z_star_prev = z_star[:, frame - 1]
@@ -116,10 +127,9 @@ for epoch in range(num_epochs):
 
         loss = loss_fn(
             z_star=z_star[:, 2:],
-            z=subspace_z_window[:, 2:],
             z_star_prev=z_star[:, 1:-1],
-            z_prev=subspace_z_window[:, 1:-1],
-        )
+            z=subspace_z_window[:, 2:],
+            z_prev=subspace_z_window[:, 1:-1])
         assert loss.shape == torch.Size([])
 
         optimizer.zero_grad()
@@ -128,17 +138,28 @@ for epoch in range(num_epochs):
 
         # ...log the running loss
         writer.add_scalar('training loss',
-                        loss.item(),
-                        iter)
-        
-        # add figure to tensorboard with z_star and z
+                          loss.item(),
+                          iter)
+
         fig = plt.figure()
-        plt.plot(z_star[1,:].cpu().detach().numpy(), label='z_star')
-        plt.plot(subspace_z_window[1,:].cpu().detach().numpy(), label='z')
-        plt.legend()
+        ax = fig.add_subplot(projection='3d')
+        ax.plot(z_star[0, :].cpu().detach().numpy(),
+                z_star[1, :].cpu().detach().numpy(),
+                z_star[2, :].cpu().detach().numpy(),
+                label='z_star')
+        ax.plot(subspace_z_window[0, :].cpu().detach().numpy(),
+                subspace_z_window[1, :].cpu().detach().numpy(),
+                subspace_z_window[2, :].cpu().detach().numpy(),
+                label='z')
+        ax.legend()
+
         writer.add_figure('z_star vs z', fig, global_step=iter)
-                          
+
+        if iter % 5000 == 0:
+            torch.save(network_correction, f"models/model_iter_{epoch}.pt")
+
         iter += 1
 
+    torch.save(network_correction, f"models/model_epoch_{epoch}.pt")
     # printing loss
     print(f"Epoch {epoch}")

@@ -6,14 +6,14 @@ from torch import nn
 dt = 1 / 60
 
 class SubSpaceNeuralNetwork(nn.Module):
-    def __init__(self, num_components_X: int = 256, num_components_Y: int=0, n_hidden_layers: int = 10):
+    def __init__(self, num_components_X: int = 256, num_components_Y: int=4, n_hidden_layers: int = 10):
         super().__init__()
 
         self.input_size = num_components_X * 2 + num_components_Y  # (z_bar, z_star_prev) concatenated
 
         hidden_size = round(1.5 * num_components_X)
 
-        self.encode = nn.Linear(self.input_size, hidden_size)
+        self.encode = nn.Sequential(nn.Linear(self.input_size, hidden_size), nn.ReLU())
 
         self.feed_forward = nn.Sequential(
             *[
@@ -47,7 +47,8 @@ def loss_position(z_star, z):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return torch.mean(torch.abs(z_star - z), dim=0)
+    return torch.abs(torch.abs(z_star) - torch.abs(z)).mean()
+    #return torch.sum(torch.abs(z_star - z), dim=1)
 
 
 def loss_velocity(z_star, z_star_prev, z, z_prev):
@@ -59,7 +60,8 @@ def loss_velocity(z_star, z_star_prev, z, z_prev):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return torch.mean(torch.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), dim=0)
+    return torch.abs(torch.abs((z_star - z_star_prev) / dt) - torch.abs((z - z_prev) / dt)).mean()
+    #return torch.sum(torch.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), dim=1)
 
 
 def loss_fn(z_star, z_star_prev, z, z_prev):
@@ -72,4 +74,4 @@ def loss_fn(z_star, z_star_prev, z, z_prev):
     @return: 1 x n_component loss vector
     """
     loss = loss_position(z_star, z) + loss_velocity(z_star, z_star_prev, z, z_prev)
-    return loss.mean()
+    return loss
