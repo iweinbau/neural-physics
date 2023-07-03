@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 # 60 fps
-dt = 1 / 60
+delta_t = 1 / 60
 
 class SubSpaceNeuralNetwork(nn.Module):
     def __init__(self, num_components_X: int = 256, num_components_Y: int=4, n_hidden_layers: int = 10):
@@ -47,9 +47,7 @@ def loss_position(z_star, z):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return torch.abs(torch.abs(z_star) - torch.abs(z)).mean()
-    #return torch.sum(torch.abs(z_star - z), dim=1)
-
+    return torch.abs(z_star - z).mean()
 
 def loss_velocity(z_star, z_star_prev, z, z_prev):
     """
@@ -60,9 +58,7 @@ def loss_velocity(z_star, z_star_prev, z, z_prev):
     @param z: actual (s x n_components) feature vector
     @return: 1 x n_component loss vector
     """
-    return torch.abs(torch.abs((z_star - z_star_prev) / dt) - torch.abs((z - z_prev) / dt)).mean()
-    #return torch.sum(torch.abs((z_star - z_star_prev) / dt - (z - z_prev) / dt), dim=1)
-
+    return torch.abs((z_star - z_star_prev) / delta_t - (z - z_prev) / delta_t).mean()
 
 def loss_fn(z_star, z_star_prev, z, z_prev):
     """

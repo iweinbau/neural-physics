@@ -50,7 +50,7 @@ def test_train(dummy_data):
     alphas, betas = initial_model_params(subspace_z)
 
     network_correction = SubSpaceNeuralNetwork(
-        n_hidden_layers=2, num_components_X=num_components
+        n_hidden_layers=2, num_components_X=num_components, num_components_Y=0
     )
     network_correction = network_correction.to(device)
 

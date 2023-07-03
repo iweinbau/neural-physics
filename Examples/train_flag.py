@@ -2,10 +2,7 @@
 
 from matplotlib import pyplot as plt
 import yaml
-import pandas as pd
 import os
-import numpy as np
-import torch
 from torch.utils.tensorboard import SummaryWriter
 from neural_physics.core_math.pca import PCA
 
@@ -13,9 +10,9 @@ from neural_physics.train.subspace_neural_physics import *
 from neural_physics.utils.data_preprocess import *
 
 config_file_dir = "bin"
-config_file_name = "config_gravity.yml"
+config_file_name = "config_flag.yml"
 
-learing_rate = 0.0001
+learning_rate = 0.0001
 num_epochs = 100
 batch_size = 16
 window_size = 32
@@ -38,10 +35,9 @@ external = np.load(os.path.join(config_file_dir, external_file_name))
 dt = config['dt']
 
 X = data.T  # 2nd column is the position data and data should be in format (dim x samples)
-X = X.reshape(X.shape[0] * X.shape[1], X.shape[2])
 Y = external.T  # 2nd column is the position data and data should be in format (dim x samples)
 
-num_components_X = 64
+num_components_X = 32
 num_components_Y = Y.shape[0]
 
 pca_x = PCA(num_components_X)
@@ -78,7 +74,7 @@ network_correction = SubSpaceNeuralNetwork(
 
 checkpoint = None
 try:
-    checkpoint = torch.load(f"models/model{0}.pt")
+    checkpoint = torch.load(f"models/model_epoch_{99}.pt")
 except:
     print("No Checkpoint saved")
 
@@ -88,14 +84,13 @@ if checkpoint:
     network_correction.train()
 
 network_correction = network_correction.to(device)
-optimizer = torch.optim.Adam(network_correction.parameters(), lr=learing_rate, amsgrad=True)
+optimizer = torch.optim.Adam(network_correction.parameters(), lr=learning_rate, amsgrad=True)
 
 writer = SummaryWriter('runs/experiment_2')
 
-iter = 0
+iter = 10000
 # train model
 for epoch in range(num_epochs):
-
     for subspace_z_window, subspace_w_window in get_windows(subspace_z, subspace_w, window_size=window_size):
 
         num_components_X, window_size = subspace_z_window.shape
@@ -130,30 +125,29 @@ for epoch in range(num_epochs):
             z_star_prev=z_star[:, 1:-1],
             z=subspace_z_window[:, 2:],
             z_prev=subspace_z_window[:, 1:-1])
-        assert loss.shape == torch.Size([])
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
+        assert loss.shape == torch.Size([])
+
         # ...log the running loss
         writer.add_scalar('training loss',
                           loss.item(),
                           iter)
-
-        fig = plt.figure()
-        ax = fig.add_subplot(projection='3d')
-        ax.plot(z_star[0, :].cpu().detach().numpy(),
-                z_star[1, :].cpu().detach().numpy(),
-                z_star[2, :].cpu().detach().numpy(),
-                label='z_star')
-        ax.plot(subspace_z_window[0, :].cpu().detach().numpy(),
-                subspace_z_window[1, :].cpu().detach().numpy(),
-                subspace_z_window[2, :].cpu().detach().numpy(),
-                label='z')
-        ax.legend()
-
-        writer.add_figure('z_star vs z', fig, global_step=iter)
+        # fig = plt.figure()
+        # ax = fig.add_subplot(projection='3d')
+        # ax.plot(z_star[0, :].cpu().detach().numpy(),
+        #         z_star[1, :].cpu().detach().numpy(),
+        #         z_star[2, :].cpu().detach().numpy(),
+        #         label='z_star')
+        # ax.plot(subspace_z_window[0, :].cpu().detach().numpy(),
+        #         subspace_z_window[1, :].cpu().detach().numpy(),
+        #         subspace_z_window[2, :].cpu().detach().numpy(),
+        #         label='z')
+        # ax.legend()
+        # writer.add_figure('z_star vs z', fig, global_step=iter)
 
         if iter % 5000 == 0:
             torch.save(network_correction, f"models/model_iter_{epoch}.pt")
