@@ -19,7 +19,7 @@ def test_model():
     dummy_z_star_prev = torch.rand([batch_size, n_components], device=device)
     inputs = torch.cat((dummy_z_bar, dummy_z_star_prev), dim=1)
 
-    model = SubSpaceNeuralNetwork(num_components_X=n_components, n_hidden_layers=2)
+    model = SubSpaceNeuralNetwork(num_components_X=n_components, num_components_Y=0, n_hidden_layers=2)
     model = model.to(device)
 
     outputs = model(inputs)

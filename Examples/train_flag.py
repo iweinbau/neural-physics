@@ -88,7 +88,7 @@ optimizer = torch.optim.Adam(network_correction.parameters(), lr=learning_rate, 
 
 writer = SummaryWriter('runs/experiment_2')
 
-iter = 10000
+iter = 0
 # train model
 for epoch in range(num_epochs):
     for subspace_z_window, subspace_w_window in get_windows(subspace_z, subspace_w, window_size=window_size):
