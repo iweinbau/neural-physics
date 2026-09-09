@@ -1,0 +1,21 @@
+# Models shown on the GitHub Pages site (pdm run pages-build -> site/).
+# Each entry needs a snapshot of a finished run in `model_dir` (pdm run publish-model runs/<name> models/<name>).
+title: Subspace Neural Physics — trained models
+repo: https://github.com/iweinbau/neural-physics
+intro: ""
+models:
+  - name: cloth
+    title: Cloth on a pole (synthetic)
+    description: >
+      A 25x17 position-based-dynamics cloth pinned to a pole, driven by gravity and a time-varying wind
+      (the external state w_t). The held-out episode uses a wind sequence the model never saw in training.
+    config: configs/cloth.yml
+    model_dir: models/cloth
+    generate: cloth          # regenerate bin/cloth.npz when it is missing (e.g. on GitHub Actions)
+    viewer:
+      max_frames: 1200       # embedded frames; ~10 MB with the full ground truth, ~1 MB without
+      full_ground_truth: true
+  # - name: flag
+  #   title: Flag (nCloth export)
+  #   config: configs/flag.yml
+  #   model_dir: models/flag

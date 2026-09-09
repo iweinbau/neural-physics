@@ -1,0 +1,66 @@
+[project]
+name = "neural-physics"
+description = "Subspace Neural Physics (Holden et al., SCA 2019): fast data-driven subspace simulation with a learned correction network"
+readme = "README.md"
+requires-python = ">=3.12"
+dynamic = ["version"]
+dependencies = [
+    "numpy>=1.26",
+    "torch>=2.4",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+tensorboard = ["tensorboard>=2.16"]   # optional training curves: set train.tensorboard: true in a config
+
+[project.scripts]
+np-datagen-cloth = "neural_physics.cli:datagen_cloth"
+np-datagen-gravity = "neural_physics.cli:datagen_gravity"
+np-train = "neural_physics.cli:train"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "flake8>=7.0",
+    "matplotlib>=3.8",   # only used by the stand-alone analysis scripts in review/
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.version]
+source = "file"
+path = "neural_physics/__init__.py"
+
+[tool.pdm.build]
+includes = ["neural_physics"]           # non-Python files (runtime/viewer.html, runtime/vendor/*) ship with the wheel
+excludes = ["neural_physics/tests"]
+
+# Uncomment to pull CPU-only torch wheels (much smaller on Linux CI than the default CUDA builds on PyPI):
+# [[tool.pdm.source]]
+# name = "pytorch-cpu"
+# url = "https://download.pytorch.org/whl/cpu"
+# include_packages = ["torch"]
+
+[tool.pdm.scripts]
+_.env = { PYTHONUNBUFFERED = "1" }
+test = { cmd = "pytest", help = "run the test suite" }
+lint = { cmd = "flake8 .", help = "flake8 (same rules as CI)" }
+check = { composite = ["lint", "test"], help = "lint + tests" }
+datagen-cloth = { call = "neural_physics.cli:datagen_cloth", help = "synthetic flag-on-a-pole data -> bin/cloth.npz (~5 min)" }
+datagen-gravity = { call = "neural_physics.cli:datagen_gravity", help = "point-mass-under-gravity data -> bin/gravity.npz" }
+train = { call = "neural_physics.cli:train", help = "train + evaluate + export viewer from a YAML config, e.g. `pdm run train configs/cloth.yml --max-time 1800`" }
+train-cloth = { cmd = "python Examples/train_cloth.py", help = "end-to-end cloth example (generates data if missing) -> runs/cloth/viewer.html" }
+train-flag = { cmd = "python Examples/train_flag.py", help = "train on your flag data (see configs/flag.yml)" }
+train-gravity = { cmd = "python Examples/train_simple_gravity.py", help = "point-mass smoke test" }
+viewer-cloth = { cmd = "python Examples/train_cloth.py --eval-only", help = "re-export runs/cloth/viewer.html from the best checkpoint" }
+publish-model = { cmd = "python -m neural_physics.pages snapshot", help = "copy a finished run into models/: `pdm run publish-model runs/cloth models/cloth`" }
+pages-build = { cmd = "python -m neural_physics.pages build configs/pages.yml --out site", help = "build the GitHub Pages site into site/ from models/*" }
+pages-serve = { cmd = "python -m http.server -d site 8000", help = "preview site/ at http://localhost:8000" }
+
+[tool.pytest.ini_options]
+testpaths = ["neural_physics/tests"]

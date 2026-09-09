@@ -1,0 +1,63 @@
+# Build the model showcase (site/) with `pdm run pages-build` and deploy it to GitHub Pages.
+#
+# One-time setup in the repository: Settings -> Pages -> "Build and deployment" -> Source: "GitHub Actions".
+# The job needs a published model under models/<name>/ (pdm run publish-model runs/<name> models/<name>).
+
+name: GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "models/**"
+      - "configs/**"
+      - "neural_physics/**"
+      - "pdm.lock"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PDM with Python 3.12
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.12"
+          cache: true
+      - name: Install (locked, runtime deps only)
+        run: pdm install --prod
+      - name: Cache the synthetic dataset
+        id: dataset
+        uses: actions/cache@v4
+        with:
+          path: bin/cloth.npz
+          key: cloth-dataset-${{ hashFiles('neural_physics/data/cloth_sim.py', 'neural_physics/data/dataset.py') }}
+      - name: Generate the synthetic dataset (cache miss only, ~5 min)
+        if: steps.dataset.outputs.cache-hit != 'true'
+        run: pdm run datagen-cloth -o bin/cloth.npz
+      - name: Build the site
+        run: pdm run pages-build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

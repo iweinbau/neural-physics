@@ -385,7 +385,6 @@ $RECYCLE.BIN/
 
 runs/*
 .vscode/*
-models/*
 bin/data.npy
 bin/wind_simulation.npy
 bin/wind_external.npy
@@ -395,3 +394,19 @@ bin/wind_external.npy
 /bin/flag_wind.npy
 /bin/data.npy
 /bin/external.npy
+
+# datasets and training outputs
+bin/*.npz
+bin/*.npy
+runs/
+!configs/*.yml
+!.github/workflows/*.yml
+
+# generated GitHub Pages site (pdm run pages-build)
+site/
+
+# pdm
+.venv/
+.pdm-python
+.pdm-build/
+dist/

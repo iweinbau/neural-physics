@@ -1,0 +1,25 @@
+# Point mass under gravity (np-datagen-gravity / neural_physics.data.point_mass). A smoke test only:
+# alpha = beta = 1 already solve it exactly, so the network has nothing to learn here -- see review/.
+name: Point mass under gravity
+output_dir: runs/gravity
+data:
+  dataset: bin/gravity.npz
+  test_fraction: 0.2
+pca:
+  n_components: 3
+model:
+  n_layers: 4
+  hidden_multiplier: 4
+train:
+  epochs: 5
+  batch_size: 16
+  window_size: 32
+  lr: 0.0001
+  noise_std: 0.01
+  noise_mode: relative
+  eval_windows: 32
+runtime:
+  eval_frames: 200
+  clip: false                  # the held-out tail of a falling mass lies outside the training range: clipping would pin it
+  title: Point mass under gravity
+  units: m
