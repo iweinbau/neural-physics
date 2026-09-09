@@ -21,6 +21,7 @@ The project is managed with [PDM](https://pdm-project.org) and needs Python >= 3
 pipx install pdm          # or: brew install pdm / pip install --user pdm
 pdm install -G dev        # creates .venv from pdm.lock: numpy, torch, pyyaml (+ pytest, flake8, matplotlib)
 pdm run check             # flake8 + pytest (~20 s)
+pdm run lint-style        # advisory style report (never fails)
 pdm run --list            # all project commands
 ```
 
@@ -112,9 +113,9 @@ neural_physics/
 Examples/                         train_cloth.py, train_flag.py, train_simple_gravity.py  (pdm run train-*)
 configs/                          cloth.yml, flag.yml, gravity.yml, pages.yml
 models/                           published model snapshots shown on the Pages site
-review/                           paper-vs-implementation review and the scripts behind it
 pyproject.toml, pdm.lock          PDM project: dependencies, scripts (`pdm run --list`), build (pdm-backend)
+tox.ini                           flake8 rules for editors (the CI gate passes them on the command line)
 ```
 
 `pdm run train-gravity` (`Examples/train_simple_gravity.py`) is a smoke test only: a point mass under gravity is solved exactly
-by alpha = beta = 1, so the network has nothing to learn there (see `review/`).
+by alpha = beta = 1, so the network has nothing to learn there.

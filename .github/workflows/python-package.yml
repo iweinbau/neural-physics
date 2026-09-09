@@ -28,10 +28,8 @@ jobs:
       run: pdm install -G dev
     - name: Lint with flake8
       run: |
-        # stop the build on Python syntax errors or undefined names (rules in .flake8)
         pdm run lint
-        # advisory style report (never fails the build)
-        pdm run flake8 . --count --exit-zero --select=E,W,F,C --max-complexity=10 --max-line-length=127 --statistics
+        pdm run lint-style
     - name: Test with pytest
       run: pdm run test
     - name: Build wheel

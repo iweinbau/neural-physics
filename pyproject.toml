@@ -49,7 +49,8 @@ excludes = ["neural_physics/tests"]
 [tool.pdm.scripts]
 _.env = { PYTHONUNBUFFERED = "1" }
 test = { cmd = "pytest", help = "run the test suite" }
-lint = { cmd = "flake8 .", help = "flake8 (same rules as CI)" }
+lint = { cmd = "flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.git,__pycache__,build,dist,runs,site,review,node_modules,.venv,.pdm-build", help = "flake8: syntax errors and undefined names (the CI gate)" }
+lint-style = { cmd = "flake8 . --count --exit-zero --select=E,W,F,C --max-complexity=10 --max-line-length=127 --statistics --exclude=.git,__pycache__,build,dist,runs,site,review,node_modules,.venv,.pdm-build", help = "advisory style report (never fails)" }
 check = { composite = ["lint", "test"], help = "lint + tests" }
 datagen-cloth = { call = "neural_physics.cli:datagen_cloth", help = "synthetic flag-on-a-pole data -> bin/cloth.npz (~5 min)" }
 datagen-gravity = { call = "neural_physics.cli:datagen_gravity", help = "point-mass-under-gravity data -> bin/gravity.npz" }
