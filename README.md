@@ -1,6 +1,6 @@
 # neural-physics
 
-An implementation of [Subspace Neural Physics: Fast Data-Driven Interactive Simulation](https://www.cim.mcgill.ca/~derek/files/Deep-Cloth-paper.pdf)
+An implementation of [Subspace Neural Physics: Fast Data-Driven Interactive Simulation]([https://www.cim.mcgill.ca/~derek/files/Deep-Cloth-paper.pdf](https://dl.acm.org/doi/10.1145/3309486.3340245))
 (Holden, Duong, Datta, Nowrouzezahrai, SCA 2019).
 
 ```
